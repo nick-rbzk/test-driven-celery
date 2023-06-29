@@ -1,0 +1,11 @@
+#!/bin/bash
+set -o errexit
+set -o pipefail
+set -o nounset
+
+python manage.py migrate
+# python manage.py runserver_plus 0.0.0.0:8000 --cert-file ./certs/cert.pem --key-file ./certs/key.pem
+# python manage.py runserver 0.0.0.0:8000
+# python manage.py runserver_plus --key-file selftest-key --cert-file selftest-cert localhost:8000
+
+daphne -e ssl:443:privateKey=./certs/apache-selfsigned.key:certKey=./certs/apache-selfsigned.crt -u /tmp/daphne.sock -p 8000 one.asgi:application -b 0.0.0.0

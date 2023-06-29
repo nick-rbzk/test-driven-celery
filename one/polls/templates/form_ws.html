@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celery example</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css"
+          integrity="sha512-XWTTruHZEYJsxV3W/lSXG1n3Q39YIWOstqvmFsdNEEQfHoZ6vm6E9GK2OrF6DSJSpIbRbi+Nn0WDPID9O7xB2Q=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  </head>
+
+  <body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-md-4">
+                <form id="your-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="email">Email address</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="username">Username</label>
+                        {{ form.username }}
+                    </div>
+                    <div class="mb-3" id="messages"></div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js"
+        integrity="sha512-8Y8eGK92dzouwpROIppwr+0kPauu0qqtnzZZNEF8Pat5tuRNJxJXCkbQfJ0HlUG3y1HB3z18CSKmUo7i2zcPpg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+
+    <script>
+        function getCookie(name){
+            let cookieValue = null;
+            if(document.cookie && document.cookie!==''){
+                const cookies = document.cookie.split(';')
+                for(let i=0; i < cookies.length; i++){
+                    const cookie = cookies[i].trim();
+                    if(cookie.substring(0, name.length +1) === (name + '=')){
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+                        break;
+                    }
+
+                }
+            }
+            return cookieValue;
+        }
+        function updateProgress(yourForm, task_id, btnHtml){
+            console.log("TASKID", task_id)
+            const ws_url = `/ws/task_status/${task_id}/`
+            // const WS = new WebSocket((location.protocol === 'https' ? 'wss' : 'ws') + '://' + window.location.host + ws_url)
+            const WS = new WebSocket('ws://172.20.10.2:8080' + ws_url)
+
+            WS.onmessage = function(event){
+                const res = JSON.parse(event.data) 
+                const taskStatus = res.state
+                console.log(taskStatus)
+                if(['SUCCESS', 'FAILURE'].includes(taskStatus)){
+                    const msg = yourForm.querySelector('#messages')
+                    const submitBtn = yourForm.querySelector('button[type="submit"]')
+                        if (taskStatus === 'SUCCESS'){
+                            msg.innerHTML = "job succeeded"
+                        } else if (taskStatus === 'FAILURE'){
+                            msg.innerHTML = res.error
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = btnHtml
+                        WS.close()
+                }
+
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function(){
+            const yourForm = document.getElementById("your-form")
+            yourForm.addEventListener('submit', function(event){
+                event.preventDefault()
+
+                const submintBtn = yourForm.querySelector('button[type="submit"]')
+                const btnHtml = submintBtn.innerHTML
+                const spinnerHtml = 'Processing ...'
+                submintBtn.disabled = false;
+                submintBtn.innerHTML = spinnerHtml;
+
+                const msg = document.querySelector('#messages')
+                msg.innerHTML = '';
+
+                const formData = new URLSearchParams(new FormData(yourForm))
+
+                fetch('/form_ws/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body:formData
+                })
+                .then(res => res.json())
+                .then((res) => {
+                    const task_id = res.task_id
+                    updateProgress(yourForm, task_id, btnHtml)
+                    console.log(res)
+                }).catch(error => {
+                    console.log("Error is", error)
+                })
+            })
+        })
+    </script>
+
+  </body>
+  </html>
