@@ -54,8 +54,8 @@
         function updateProgress(yourForm, task_id, btnHtml){
             console.log("TASKID", task_id)
             const ws_url = `/ws/task_status/${task_id}/`
-            // const WS = new WebSocket((location.protocol === 'https' ? 'wss' : 'ws') + '://' + window.location.host + ws_url)
-            const WS = new WebSocket('ws://172.20.10.2:8080' + ws_url)
+            const WS = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + window.location.host + ws_url)
+           // const WS = new WebSocket('ws://172.20.10.2:8080' + ws_url)
 
             WS.onmessage = function(event){
                 const res = JSON.parse(event.data) 

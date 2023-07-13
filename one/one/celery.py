@@ -19,7 +19,12 @@ app.autodiscover_tasks()
 @app.task(bind=True)
 def debug_task(self):
     print('Request: {0!r}'.format(self.request))
-    
+
+@app.task
+def divide(x, y):
+    import time
+    time.sleep(5)
+    return x / y
     
 app.conf.beat_schedule = {
     #Scheduler Name
