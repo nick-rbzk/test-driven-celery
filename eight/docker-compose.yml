@@ -1,0 +1,74 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: eight_web
+    command: /start.sh
+    volumes:
+      - .:/eight
+    ports:
+      - 8080:8080
+      - 8091:443
+    env_file:
+      - ./.env/.dev-sample
+    depends_on:
+      - db
+      - redis
+  
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - ./postgres8_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=hello_django
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+  
+  redis:
+    image: redis:7-alpine
+  
+  celery_worker:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: eight_celery_worker
+    command: /start-celeryworker.sh
+    volumes:
+      - .:/eight
+    env_file:
+      - ./.env/.dev-sample
+    depends_on:
+      - db
+      - redis
+  
+  celery_beat:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: eight_clery_beat
+    command: /start-celerybeat.sh
+    volumes:
+      - .:/eight
+    env_file:
+      - ./.env/.dev-sample
+    depends_on:
+      - db
+      - redis
+  
+  flower:
+    build:
+      context: . 
+      dockerfile: compose/local/django/Dockerfile
+    image: eight_fower 
+    command: /start-flower.sh
+    volumes:
+      - .:/eight
+    env_file:
+      - ./.env/.dev-sample
+    ports:
+      - 5557:5555
+    depends_on:
+      - db
+      - redis
+
