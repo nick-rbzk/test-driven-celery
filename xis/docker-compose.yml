@@ -1,0 +1,76 @@
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: backed6-web
+    command: /start.sh
+    volumes:
+      - .:/xis
+    env_file:
+      - ./.env/.dev-sample
+    ports:
+      - 8080:8080
+      - 8091:443
+    depends_on:
+      - db
+      - redis
+  
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres6_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=hello_django
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+  
+  redis:
+    image: redis:7-alpine
+  
+  celery_worker:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: backed6_celery_worker
+    command: /start-celeryworker.sh
+    volumes:
+      - .:/xis
+    env_file:
+      - ./.env/.dev-sample
+    depends_on:
+      - db
+      - redis
+  
+  celery_beat:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: backend6_celery_beat
+    command: /start-celerybeat.sh
+    volumes:
+      - .:/xis
+    env_file:
+      - ./.env/.dev-sample
+    depends_on:
+      - db
+      - redis
+  
+  flower:
+    build:
+      context: .
+      dockerfile: compose/local/django/Dockerfile
+    image: backend6_celery_flower
+    command: /start-flower.sh
+    volumes:
+      - .:/xis
+    env_file:
+      - ./.env/.dev-sample
+    ports:
+      - 5557:5555
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres6_data:
