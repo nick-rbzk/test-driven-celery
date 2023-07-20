@@ -120,7 +120,19 @@ CELERY_TASK_QUEUES = (
     Queue('low_priority'),
 )
 
+# CELERY_TASK_ROUTES = {
+#     "one.celery.*": {
+#         'queue': "high_priority",
+#     }
+# }
 
+def route_task(name, args, kwargs, *task, **kw):
+    if ":" in name:
+        queue, _ = name.split(":")
+        return {"queue": queue}
+    return {"queue": "default"}
+
+CELERY_TASK_ROUTES = (route_task,)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

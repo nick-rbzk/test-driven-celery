@@ -31,3 +31,21 @@ def task_process_notification(self):
 @task_postrun.connect
 def task_postrun_handler(task_id, **kwargs):
     notify_channel_layer(task_id)
+
+
+@shared_task(name="default:dynamic_example_one")
+def dynamic_example_one():
+    logger.info("Example One")
+    print("Example ONe")
+
+
+@shared_task(name="low_priority:dynamic_example_two")
+def dynamic_example_two():
+    logger.info("Example two")
+    print("Example two")
+
+
+@shared_task(name="high_priority:dynamic_example_three")
+def dynamic_example_three():
+    logger.info("Example three")
+    print("Example three")
