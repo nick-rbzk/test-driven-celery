@@ -18,13 +18,14 @@ def sample_task(email, *args,**kwargs):
 @shared_task(bind=True)
 def task_process_notification(self):
     try:
-        # if not random.choice([0,1]):
-            # raise Exception()
+        if not random.choice([0,1]):
+            raise Exception()
         print("PROCESS NOTIFICATION")
         requests.post('http://httpbin.org/delay/5') 
     
     except Exception as e:
         print(str(e))
+        logger.error("exception raise it would retry after 5 sec")
         raise self.retry(exc=e, countdown=5)
 
 
