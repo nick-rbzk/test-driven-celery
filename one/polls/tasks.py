@@ -2,7 +2,7 @@ import random
 import requests
 import json
 
-from celery import shared_task
+from celery import shared_task, Task
 from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
 
@@ -27,6 +27,33 @@ def task_process_notification(self):
         print(str(e))
         logger.error("exception raise it would retry after 5 sec")
         raise self.retry(exc=e, countdown=5)
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})
+def task_process_notification2(self):
+    if not random.choice([0,1]):
+        raise Exception()
+    print("Process notification 2")
+    requests.post('http://httpbin.org/delay/5') 
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=5, retry_jitter=True, retry_kwargs={"max_retries":5})
+def task_process_notification3(self):
+    if not random.choice([0, 1]):
+        raise Exception()
+    print("PROCESS NOTIFICATION 3")
+    requests.post('http://httpbin.org/delay/5') 
+
+class BaseTaskWithRetry(Task):
+    autoretry_for=(Exception, KeyError)
+    retry_kwargs={"max_retries": 5}
+    retry_backoff=True
+
+@shared_task(bind=True, base=BaseTaskWithRetry)
+def task_process_notification4():
+    if not random.choice([0,1]):
+        raise Exception()
+    print("PROCESS NOTIFICATION 4")
+    requests.post('http://httpbin.org/delay/5') 
+    
 
 
 @task_postrun.connect
