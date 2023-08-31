@@ -12,6 +12,8 @@ django-extensions==3.2.1
 pyOpenSSL==23.1.1
 daphne==4.0.0
 Twisted[tls,http2]
+
+# for prod setup
 gunicorn==20.1.0
 uvicorn[standard]==0.18.2
 
